@@ -20,6 +20,7 @@ class Enlarger():
         self.light.off()
 
     def print(self, seconds):
+        print(f"Printing for {seconds} seconds")
         metronome = Metronome()
         self.light.on()
         time.sleep(seconds)
@@ -29,9 +30,11 @@ class Enlarger():
     def make(self, the_print):
         steps = the_print.get_print_list()
         for step in steps:
-            print( step.get("user_prompt") )
+            duration = step.get("duration")
+            print(step.get("user_prompt"))
+            print(f"Will print {duration} seconds")
             input("Press the ENTER key to continue...")
-            self.print( step.get("duration") )
+            self.print( duration )
 
 
 class Metronome():
