@@ -16,6 +16,17 @@ class OneExposurePrint(BasicPrint):
         super().__init__(steps = steps)
 
 
+class FStopTestStrip(BasicPrint):
+    def __init__(self, base=4, steps=5, stops=2):
+        total_steps = [ base * 2**(i/stops) for i in range(0,steps) ]
+        total_steps.insert(0, 0)
+        incremental_steps = [j-i for i, j in zip(total_steps[:-1], total_steps[1:])]  # take differences between steps
+        steps = [ {"duration":i, 
+                   "user_prompt": "Place paper for print." if i==base else "Move card to block just exposed test strip."} 
+                   for i in incremental_steps ] 
+        super().__init__(steps = steps)
+
+
 class LocalizedFStopTestStrip(BasicPrint):
     def __init__(self, base=4, steps=5, stops=2):
         steps = [ {"duration":base * 2**(i/stops), 
