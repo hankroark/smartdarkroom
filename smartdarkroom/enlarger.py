@@ -1,6 +1,7 @@
 import time
 import os
 import smartdarkroom.utils as sdutils
+import smartdarkroom.prints
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 
@@ -24,6 +25,13 @@ class Enlarger():
         time.sleep(seconds)
         self.light.off()
         metronome.stop()
+
+    def make(self, the_print):
+        steps = the_print.get_print_list()
+        for step in steps:
+            print( step.get("user_prompt") )
+            input("Press the ENTER key to continue...")
+            self.print( step.get("duration") )
 
 
 class Metronome():
