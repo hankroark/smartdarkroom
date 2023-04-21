@@ -13,11 +13,18 @@ class Enlarger():
         self.light = light
         self.light.off()
 
-    def focus_on(self):
+    def _focus_on(self):
         self.light.on()
 
-    def focus_off(self):
+    def _focus_off(self):
         self.light.off()
+
+    def focus(self):
+        try:
+            self._focus_on()
+            input("Press the ENTER key to turn off focus")
+        finally:
+            self._focus_off()
 
     def print(self, seconds):
         print(f"Printing for {seconds} seconds")
@@ -28,6 +35,7 @@ class Enlarger():
         metronome.stop()
 
     def make(self, the_print):
+        self._focus_off()  # turn off the focus if it is on
         steps = the_print.get_print_list()
         for step in steps:
             duration = step.get("duration")
