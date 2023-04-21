@@ -27,12 +27,14 @@ class Enlarger():
             self._focus_off()
 
     def print(self, seconds):
-        print(f"Printing for {seconds} seconds")
-        metronome = Metronome()
-        self.light.on()
-        time.sleep(seconds)
-        self.light.off()
-        metronome.stop()
+        try:
+            print(f"Printing for {seconds} seconds")
+            metronome = Metronome()
+            self.light.on()
+            time.sleep(seconds)
+        finally:
+            self.light.off()
+            metronome.stop()
 
     def make(self, the_print):
         self._focus_off()  # turn off the focus if it is on
