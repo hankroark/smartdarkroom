@@ -55,12 +55,39 @@ class BasicPrint(ABC):
 
     def _set_print_list(self, steps):
         self._print_list = steps
+
+    def _add_step(self, step):
+        self._print_list.append(step)
     
 
 class OneExposurePrint(BasicPrint):
     def __init__(self, print_duration, grade=2.5, before_step_duration=0, before_step_light=False):
         steps = [ PrintStep(print_duration, grade=grade, user_prompt="Place paper for print.", before_step_duration=before_step_duration, before_step_light=before_step_light) ]
         super().__init__(steps = steps)
+
+
+class MultiStepPrint(BasicPrint):
+    def __init__(self, base_duration, base_grade=2.5, before_step_duration=0, before_step_light=False):
+        self._base_duration = base_duration
+        self._base_grade = base_grade
+        steps = [ PrintStep(base_duration, grade=base_grade, user_prompt="Place paper for print.", before_step_duration=before_step_duration, before_step_light=before_step_light) ]
+        super().__init__(steps = steps)
+
+    # at some point create from test string
+
+    def burn(self, stops, burn_grade=None, before_step_duration=0, before_step_light=False, user_prompt=None):
+        burn_duration = self._base_duration * stops
+        if burn_grade is None:
+            burn_grade = self._base_grade
+        if user_prompt is None:
+            user_prompt = f"Burn for {stops} stops."
+
+        step = PrintStep(burn_duration, grade=burn_grade, user_prompt=user_prompt, \
+                         before_step_duration=before_step_duration, \
+                         before_step_light=before_step_light)
+        
+        self._add_step(step)
+
 
 
 class FStopTestStrip(BasicPrint):
