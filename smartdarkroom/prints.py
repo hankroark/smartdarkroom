@@ -9,7 +9,7 @@ class PrintStep():
         self._before_duration = before_step_duration
         self._before_light = before_step_light
         
-    def __repr__(self):
+    def __str__(self):
         return f"PrintStep(Exposure {self.duration:.1f} sec, " + \
                  f"Grade {self.grade}, " + \
                  f"Preview {self.before_step_duration:.1f} sec w/light {self.before_step_light}, " + \
@@ -40,7 +40,7 @@ class BasicPrint(ABC):
     def __init__(self, steps=[]):
         self._print_list = steps
 
-    def __repr__(self):
+    def __str__(self):
         representation = f"{self._print_type()}(\n"
         for i, step in enumerate(self.get_print_list()):
             representation += f"    {i}: {step},\n"
@@ -62,11 +62,18 @@ class BasicPrint(ABC):
     def __add__(self, other):
         return BasicPrint(self.get_print_list() + other.get_print_list())
     
+    def __getitem__(self, key):
+        return self._print_list[key]
+    
 
 class OneExposurePrint(BasicPrint):
     def __init__(self, print_duration, grade=2.5, before_step_duration=0, before_step_light=False):
         steps = [ PrintStep(print_duration, grade=grade, user_prompt="Place paper for print.", before_step_duration=before_step_duration, before_step_light=before_step_light) ]
         super().__init__(steps = steps)
+
+    @classmethod
+    def from_step(cls, step, before_step_duration=0, before_step_light=False):
+        return cls(step.duration, step.grade, before_step_duration, before_step_light)
 
 
 class MultiStepPrint(BasicPrint):
@@ -87,7 +94,9 @@ class MultiStepPrint(BasicPrint):
         super().__init__()
         self._build_print_list()
 
-    # at some point create from test print
+    @classmethod
+    def from_step(cls, step, user_prompt="Place paper for print.", before_step_duration=0, before_step_light=False):
+        return cls(step.duration, step.grade, user_prompt, before_step_duration, before_step_light)
 
     def burn(self, stops, burn_grade=None, before_step_duration=0, before_step_light=False, subject=""):
         burn_duration = self._base_duration * 2**stops - self._base_duration
