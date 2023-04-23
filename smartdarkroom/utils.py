@@ -9,8 +9,12 @@ class RepeatedTimer(object):
         self.args = args
         self.kwargs = kwargs
         self.is_running = False
+        self._time_zero()
         self.next_call = time.time()
         self.start()
+
+    def _time_zero(self):
+        self.function(*self.args, **self.kwargs)
 
     def _run(self):
         self.is_running = False
@@ -18,7 +22,6 @@ class RepeatedTimer(object):
         self.function(*self.args, **self.kwargs)
 
     def start(self):
-        self.function(*self.args, **self.kwargs)   # Want to immediately play function then at interval
         if not self.is_running:
             self.next_call += self.interval
             self._timer = threading.Timer(self.next_call - time.time(), self._run)

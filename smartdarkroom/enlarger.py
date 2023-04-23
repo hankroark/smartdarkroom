@@ -80,10 +80,11 @@ class Metronome():
 
         if self._count == 0:
             print("TIMER: ", end="", flush=True)
+        else:
+            print("\b\b\b", end="", flush=True)
 
-        if self._count == int(self._count):
-            print(f"{self._count:.0f} ", end="", flush=True)
-        self._count += 0.5
+        print(f"{self._count:02} ", end="", flush=True)
+        self._count += 1
 
     def start(self):
         self._metronome.start()
