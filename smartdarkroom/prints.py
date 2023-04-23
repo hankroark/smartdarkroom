@@ -67,28 +67,68 @@ class OneExposurePrint(BasicPrint):
 
 
 class MultiStepPrint(BasicPrint):
-    def __init__(self, base_duration, base_grade=2.5, before_step_duration=0, before_step_light=False):
+    def __init__(self, base_duration, base_grade=2.5, user_prompt="Place paper for print.", before_step_duration=0, before_step_light=False):
         self._base_duration = base_duration
         self._base_grade = base_grade
-        steps = [ PrintStep(base_duration, grade=base_grade, user_prompt="Place paper for print.", before_step_duration=before_step_duration, before_step_light=before_step_light) ]
-        super().__init__(steps = steps)
+        self._base_before_step_duration = 0
+        self._base_before_step_light = before_step_light
+        self._base_user_prompt = user_prompt
+        self._base_step = PrintStep(base_duration, grade=base_grade, \
+                                    user_prompt=user_prompt, \
+                                    before_step_duration=before_step_duration, \
+                                    before_step_light=before_step_light)
+        self._burn_steps = []
+        self._dodge_steps = []
+        self._total_dodge_steps = 0
+        self._total_dodge_duration = 0
+        super().__init__()
+        self._build_print_list()
 
-    # at some point create from test string
+    # at some point create from test print
 
-    def burn(self, stops, burn_grade=None, before_step_duration=0, before_step_light=False, user_prompt=None):
-        burn_duration = self._base_duration * stops
+    def burn(self, stops, burn_grade=None, before_step_duration=0, before_step_light=False, subject=""):
+        burn_duration = self._base_duration * stops if stops < 1 else self._base_duration * 2**(stops-1)
         if burn_grade is None:
             burn_grade = self._base_grade
-        if user_prompt is None:
-            user_prompt = f"Burn for {stops} stops."
+        user_prompt = f"Burn {subject} for {stops} stops."
 
-        step = PrintStep(burn_duration, grade=burn_grade, user_prompt=user_prompt, \
+        burn_step = PrintStep(burn_duration, grade=burn_grade, user_prompt=user_prompt, \
                          before_step_duration=before_step_duration, \
                          before_step_light=before_step_light)
+        self._burn_steps.append(burn_step)
+
+        self._build_print_list()
+
+    def _build_print_list(self):
+        self._set_print_list([self._base_step] + self._dodge_steps + self._burn_steps)
+
+    def dodge(self, stops, dodge_grade=None, before_step_duration=0, before_step_light=False, subject=""):
+        if stops > 1:
+            raise Exception("Cannot add dodge step that is greater than 1 stop.")
         
-        self._add_step(step)
+        if stops + self._total_dodge_steps > 1:
+            raise Exception("Cannot add dodge step that would take stops dodged to greater than 1 stop.")
+        
+        dodge_duration = self._base_duration * stops 
+        self._total_dodge_steps += stops
+        self._total_dodge_duration += dodge_duration
 
+        if dodge_grade is None:
+            dodge_grade = self._base_grade
+        user_prompt = f"Dodge {subject} for {stops} stops."
 
+        dodge_step = PrintStep(dodge_duration, grade=dodge_grade, user_prompt=user_prompt, \
+                         before_step_duration=before_step_duration, \
+                         before_step_light=before_step_light)
+        self._dodge_steps.append(dodge_step)
+        
+        self._base_step = PrintStep(self._base_duration - self._total_dodge_duration, \
+                                    grade=self._base_grade, \
+                                    user_prompt=self._base_user_prompt, \
+                                    before_step_duration=self._base_before_step_duration, \
+                                    before_step_light=self._base_before_step_light)
+        
+        self._build_print_list()
 
 class FStopTestStrip(BasicPrint):
     def __init__(self, base=4, steps=5, stops=1/2, middle_out=False, grade=2.5):
