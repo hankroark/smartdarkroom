@@ -58,6 +58,9 @@ class BasicPrint(ABC):
 
     def _add_step(self, step):
         self._print_list.append(step)
+
+    def __add__(self, other):
+        return BasicPrint(self.get_print_list() + other.get_print_list())
     
 
 class OneExposurePrint(BasicPrint):
@@ -126,6 +129,7 @@ class MultiStepPrint(BasicPrint):
                                     before_step_light=self._base_before_step_light)
         
         self._build_print_list()
+
 
 class FStopTestStrip(BasicPrint):
     def __init__(self, base=4, steps=5, stops=1/2, middle_out=False, grade=2.5):
