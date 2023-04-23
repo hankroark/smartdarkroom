@@ -1,4 +1,5 @@
 from abc import ABC
+# from enum import Enum
 
 class PrintStep():
     def __init__(self, duration, user_prompt="", before_step_duration=0, before_step_light=False):
@@ -27,11 +28,21 @@ class PrintStep():
     @property
     def before_step_light(self):
         return self._before_light
-    
+        
 
 class BasicPrint(ABC):
     def __init__(self, steps=[]):
         self._print_list = steps
+
+    def __repr__(self):
+        representation = f"{self._print_type()}(\n"
+        for i, step in enumerate(self.get_print_list()):
+            representation += f"    {i}: {step},\n"
+        representation += ")"
+        return representation
+    
+    def _print_type(self):
+        return self.__class__.__name__
         
     def get_print_list(self):
         return self._print_list

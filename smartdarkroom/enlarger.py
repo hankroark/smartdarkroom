@@ -57,9 +57,7 @@ class Enlarger():
 
     def _preview_print(self, the_print):
         print("*** PRINT STRATEGY PREVIEW ***")
-        steps = the_print.get_print_list()
-        for i, step in enumerate(steps):
-            print(f"Step {i}: {step!r}")
+        print(the_print)
         print("*** END PRINT STRATEGY PREVIEW ***")
         print("")
 
