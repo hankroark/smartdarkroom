@@ -11,6 +11,7 @@ AFTER_PREVIEW_SOUND = os.getenv("AFTER_PREVIEW_SOUND", 'smartdarkroom/resources/
 class Enlarger():
     def __init__(self, light):
         self.light = light
+        self._filter = None
         self.light.off()
 
     def _focus_on(self):
@@ -22,11 +23,18 @@ class Enlarger():
     def focus(self):
         try:
             self._focus_on()
-            input("Press the ENTER key to turn off focus")
+            input("*** Press the ENTER key to turn off focus. ")
         finally:
             self._focus_off()
 
-    def print(self, seconds, before_print_seconds, before_print_light):
+    def _set_filter(self, filter):
+        if filter != self._filter:
+            input(f"*** Set filter to {filter}.  Press ENTER when complete. ")
+            self._filter = filter 
+        
+    def print(self, seconds, filter, before_print_seconds, before_print_light):
+        self._set_filter(filter)
+
         try:
             if before_print_seconds > 0:
                 print(f"Before print for {before_print_seconds:.1f} seconds w/light {before_print_light}")
@@ -51,14 +59,13 @@ class Enlarger():
         steps = the_print.get_print_list()
         for i, step in enumerate(steps):
             print(f"Step {i}: {step!r}")
-            print(step.user_prompt)
-            input("Press the ENTER key to continue...")
-            self.print(step.duration, step.before_step_duration, step.before_step_light)
+            input(f"*** {step.user_prompt}  Press the ENTER when complete. ")
+            self.print(step.duration, step.grade, step.before_step_duration, step.before_step_light)
 
     def _preview_print(self, the_print):
-        print("*** PRINT STRATEGY PREVIEW ***")
+        print("### PRINT STRATEGY PREVIEW ###")
         print(the_print)
-        print("*** END PRINT STRATEGY PREVIEW ***")
+        print("### END PRINT STRATEGY PREVIEW ###")
         print("")
 
 class Metronome():
