@@ -71,14 +71,26 @@ class Enlarger():
 class Metronome():
     def __init__(self, sound = METRONOME_SOUND, interval = 1):
         pygame.mixer.init()
+        self._count = 0
         self._metronome_sound=pygame.mixer.Sound(sound)
-        self._metronome = sdutils.RepeatedTimer(interval, pygame.mixer.Sound.play, self._metronome_sound)
+        self._metronome = sdutils.RepeatedTimer(interval, self._play)
+
+    def _play(self):
+        pygame.mixer.Sound.play(self._metronome_sound)
+
+        if self._count == 0:
+            print("TIMER: ", end="", flush=True)
+
+        if self._count == int(self._count):
+            print(f"{self._count:.0f} ", end="", flush=True)
+        self._count += 0.5
 
     def start(self):
         self._metronome.start()
 
     def stop(self):
         self._metronome.stop()
+        print("", flush=True)
 
 def _play_after_preview_sound(sound = AFTER_PREVIEW_SOUND, repeat=2):
     pygame.mixer.init()
