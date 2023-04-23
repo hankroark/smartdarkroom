@@ -87,7 +87,7 @@ class MultiStepPrint(BasicPrint):
     # at some point create from test print
 
     def burn(self, stops, burn_grade=None, before_step_duration=0, before_step_light=False, subject=""):
-        burn_duration = self._base_duration * stops if stops < 1 else self._base_duration * 2**(stops-1)
+        burn_duration = self._base_duration * 2**stops - self._base_duration
         if burn_grade is None:
             burn_grade = self._base_grade
         user_prompt = f"Burn {subject} for {stops} stops."
@@ -103,13 +103,10 @@ class MultiStepPrint(BasicPrint):
         self._set_print_list([self._base_step] + self._dodge_steps + self._burn_steps)
 
     def dodge(self, stops, dodge_grade=None, before_step_duration=0, before_step_light=False, subject=""):
-        if stops > 1:
-            raise Exception("Cannot add dodge step that is greater than 1 stop.")
-        
-        if stops + self._total_dodge_steps > 1:
-            raise Exception("Cannot add dodge step that would take stops dodged to greater than 1 stop.")
-        
-        dodge_duration = self._base_duration * stops 
+        dodge_duration = self._base_duration - self._base_duration / (2**stops)
+        if (dodge_duration + self._total_dodge_duration) > self._base_duration:
+            raise Exception("Cannot add dodge step that would make total dodge duration greater than base duration.")
+
         self._total_dodge_steps += stops
         self._total_dodge_duration += dodge_duration
 
