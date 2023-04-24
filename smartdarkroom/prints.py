@@ -112,6 +112,7 @@ class MultiStepPrint(BasicPrint):
 
         self._build_print_list()
 
+    # TODO turn into late binding, override super class methods of [] and get_print_list
     def _build_print_list(self):
         self._set_print_list([self._base_step] + self._dodge_steps + self._burn_steps)
 
@@ -170,9 +171,8 @@ class LocalizedFStopTestStrip(BasicPrint):
         original_step = source_print[step_number-1]
         if grade is None:
             grade = original_step.grade
-        else:
-            grade = 2.5
+
         return cls(base=original_step.duration, steps=steps, stops=stops, middle_out=middle_out, grade=grade)
     
-    # TODO @classmethod create split grade test strip
+    # TODO create split grade test strip classes
 
