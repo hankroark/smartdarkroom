@@ -154,6 +154,21 @@ class FStopTestStrip(BasicPrint):
                    for i in incremental_steps ] 
         super().__init__(steps = steps)
 
+    def __getitem__(self, key):
+        print_list = self.get_print_list()
+        new_duration = sum([print_list[i].duration for i in range(key+1)])
+        template_step=print_list[key]
+        return PrintStep( new_duration, grade=template_step.grade )
+    
+    @classmethod
+    def from_step(cls, source_print, step_number, steps=5, stops=1/2, middle_out=False, grade=None):
+        original_step = source_print[step_number-1]
+        if grade is None:
+            grade = original_step.grade
+
+        return cls(base=original_step.duration, steps=steps, stops=stops, middle_out=middle_out, grade=grade)
+
+
 
 class LocalizedFStopTestStrip(BasicPrint):
     def __init__(self, base=4, steps=5, stops=1/2, middle_out=False, grade=2.5):
