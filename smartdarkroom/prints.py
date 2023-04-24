@@ -1,5 +1,4 @@
 from abc import ABC
-# from enum import Enum
 
 class PrintStep():
     def __init__(self, duration, user_prompt="", grade=None, before_step_duration=0, before_step_light=False):
@@ -56,14 +55,11 @@ class BasicPrint(ABC):
     def _set_print_list(self, steps):
         self._print_list = steps
 
-    def _add_step(self, step):
-        self._print_list.append(step)
-
     def __add__(self, other):
         return BasicPrint(self.get_print_list() + other.get_print_list())
     
     def __getitem__(self, key):
-        return self._print_list[key]
+        return self.get_print_list()[key]
     
 
 class OneExposurePrint(BasicPrint):
