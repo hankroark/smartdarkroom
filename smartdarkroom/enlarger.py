@@ -32,7 +32,7 @@ class Enlarger():
             input(f"*** Set filter to {filter}.  Press ENTER when complete. ")
             self._filter = filter 
         
-    def print(self, seconds, filter, before_print_seconds, before_print_light):
+    def print(self, seconds, filter=None, before_print_seconds=0, before_print_light=False):
         self._set_filter(filter)
 
         try:
