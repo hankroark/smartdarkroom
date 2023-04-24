@@ -43,7 +43,7 @@ class BasicPrint(ABC):
     def __str__(self):
         representation = f"{self._print_type()}(\n"
         for i, step in enumerate(self.get_print_list()):
-            representation += f"    {i}: {step},\n"
+            representation += f"    {i+1}: {step},\n"
         representation += ")"
         return representation
     

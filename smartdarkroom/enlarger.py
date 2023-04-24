@@ -58,7 +58,7 @@ class Enlarger():
         self._preview_print(the_print)
         steps = the_print.get_print_list()
         for i, step in enumerate(steps):
-            print(f"Step {i}: {step!r}")
+            print(f"Step {i+1}: {step}")
             input(f"*** {step.user_prompt}  Press the ENTER when complete. ")
             self.print(step.duration, step.grade, step.before_step_duration, step.before_step_light)
 
