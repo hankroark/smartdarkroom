@@ -15,17 +15,16 @@
 from abc import ABC
 
 class PrintStep():
-    def __init__(self, duration, user_prompt="", grade=None, before_step_duration=0, before_step_light=False):
+    def __init__(self, duration, *, user_prompt="", grade=None, before_step_duration=0):
         self._duration = duration
         self._user_prompt = user_prompt
         self._grade = grade
         self._before_duration = before_step_duration
-        self._before_light = before_step_light
         
     def __str__(self):
         return f"PrintStep(Exposure {self.duration:.1f} sec, " + \
                  f"Grade {self.grade}, " + \
-                 f"Preview {self.before_step_duration:.1f} sec w/light {self.before_step_light}, " + \
+                 f"Preview {self.before_step_duration:.1f} sec w/light, " + \
                  f"{self.user_prompt!r})"
     
     @property
@@ -39,10 +38,6 @@ class PrintStep():
     @property
     def before_step_duration(self):
         return self._before_duration
-    
-    @property
-    def before_step_light(self):
-        return self._before_light
     
     @property
     def grade(self):
@@ -77,24 +72,22 @@ class BasicPrint(ABC):
     
 
 class OneExposurePrint(BasicPrint):
-    def __init__(self, print_duration, grade=2.5, before_step_duration=0, before_step_light=False):
-        steps = [ PrintStep(print_duration, grade=grade, user_prompt="Place paper for print.", before_step_duration=before_step_duration, before_step_light=before_step_light) ]
+    def __init__(self, print_duration, *, grade=2.5, before_step_duration=0):
+        steps = [ PrintStep(print_duration, grade=grade, user_prompt="Place paper for print.", before_step_duration=before_step_duration) ]
         super().__init__(steps = steps)
 
     @classmethod
-    def from_step(cls, source_print, step_number, before_step_duration=0, before_step_light=False):
+    def from_step(cls, source_print, step_number, *, before_step_duration=0):
         original_step = source_print[step_number-1]
         return cls(print_duration=original_step.duration, grade=original_step.grade, \
-                   before_step_duration=before_step_duration, \
-                   before_step_light=before_step_light)
+                   before_step_duration=before_step_duration)
 
 
 class MultiStepPrint(BasicPrint):
-        def __init__(self, base_duration, grade=2.5, user_prompt="Place paper for print.", before_step_duration=0, before_step_light=False):
+        def __init__(self, base_duration, *, grade=2.5, user_prompt="Place paper for print.", before_step_duration=0):
             self._base_duration = base_duration
             self._base_grade = grade
             self._base_before_step_duration = before_step_duration
-            self._base_before_step_light = before_step_light
             self._base_user_prompt = user_prompt
             self._burn_steps_in_stops = []
             self._dodge_steps_in_stops = []
@@ -104,32 +97,28 @@ class MultiStepPrint(BasicPrint):
             self._build_print_list()
 
         @classmethod
-        def from_step(cls, source_print, step_number, *, before_step_duration=0, before_step_light=False):
+        def from_step(cls, source_print, step_number, *, before_step_duration=0):
             original_step = source_print[step_number-1]
             return cls(base_duration=original_step.duration, grade=original_step.grade, \
-                      before_step_duration=before_step_duration, \
-                      before_step_light=before_step_light)
+                      before_step_duration=before_step_duration)
         
         @classmethod
-        def ilford_split_grade(cls, total_duration, *, low_grade=0, high_grade=5, before_steps_duration=0, before_steps_light=0):
+        def ilford_split_grade(cls, total_duration, *, low_grade=0, high_grade=5, before_steps_duration=0):
             low_grade_print = cls(base_duration = total_duration/2,
                                   grade = low_grade,
-                                  before_step_duration = before_steps_duration,
-                                  before_step_light = before_steps_light)
+                                  before_step_duration = before_steps_duration)
             high_grade_print = cls(base_duration = total_duration/2,
                                    grade = high_grade,
                                    user_prompt = "Leave paper in place for print.",
-                                   before_step_duration = before_steps_duration,
-                                   before_step_light = before_steps_light)
+                                   before_step_duration = before_steps_duration)
             
             return low_grade_print, high_grade_print
         
         @classmethod
-        def ilford_split_grade_from_step(cls, source_print, step_number, *, before_step_duration=0, before_step_light=False):
+        def ilford_split_grade_from_step(cls, source_print, step_number, *, before_step_duration=0):
             original_step = source_print[step_number-1]
             return cls.ilford_split_grade(total_duration=original_step.duration, \
-                                          before_steps_duration=before_step_duration, \
-                                          before_steps_light=before_step_light)
+                                          before_steps_duration=before_step_duration)
 
 
         @property
@@ -166,8 +155,7 @@ class MultiStepPrint(BasicPrint):
             base_step = PrintStep(duration=self._base_duration - self._total_dodge_duration, \
                                   grade=self._base_grade, \
                                   user_prompt=self._base_user_prompt, \
-                                  before_step_duration=self._base_before_step_duration, \
-                                  before_step_light=self._base_before_step_light)
+                                  before_step_duration=self._base_before_step_duration)
             burn_steps = self._calc_burn_steps()
             self._set_print_list([base_step]+dodge_steps+burn_steps)
 
@@ -195,17 +183,15 @@ class MultiStepPrint(BasicPrint):
                 burn_step = PrintStep(duration=burn_duration,  
                                       grade = self._base_grade, 
                                       user_prompt = step.user_prompt, 
-                                      before_step_duration = step.before_step_duration, 
-                                      before_step_light=step.before_step_light)
+                                      before_step_duration = step.before_step_duration)
                 burn_steps.append(burn_step)
             return burn_steps
 
-        def burn(self, stops, *, before_step_duration=0, before_step_light=False, subject=""):
+        def burn(self, stops, *, before_step_duration=0, subject=""):
             user_prompt = f"Burn {subject} for {stops} stops."
             burn_step = PrintStep(stops, grade=None,   # Grade of step ignored when building
                                   user_prompt=user_prompt, \
-                                  before_step_duration=before_step_duration, \
-                                  before_step_light=before_step_light)
+                                  before_step_duration=before_step_duration)
             self._burn_steps_in_stops.append(burn_step)
             self._build_print_list()
 
@@ -221,12 +207,11 @@ class MultiStepPrint(BasicPrint):
                 dodge_step = PrintStep(duration=dodge_duration,  
                                        grade = self._base_grade, 
                                        user_prompt = step.user_prompt, 
-                                       before_step_duration = step.before_step_duration, 
-                                       before_step_light=step.before_step_light)
+                                       before_step_duration = step.before_step_duration)
                 dodge_steps.append(dodge_step)
             return dodge_steps
 
-        def dodge(self, stops, *, before_step_duration=0, before_step_light=False, subject=""):
+        def dodge(self, stops, *, before_step_duration=0, subject=""):
             proposed_dodge_duration = self._base_duration - self._base_duration / (2**stops)
             if (proposed_dodge_duration + self._total_dodge_duration) > self._base_duration:
                 raise Exception("Cannot add dodge step that would make total dodge duration greater than base duration.")
@@ -234,8 +219,7 @@ class MultiStepPrint(BasicPrint):
             user_prompt = f"Dodge {subject} for {stops} stops."
             dodge_step = PrintStep(stops, grade=None, # Grade of step ignored when building
                                    user_prompt=user_prompt, \
-                                   before_step_duration=before_step_duration, \
-                                   before_step_light=before_step_light)
+                                   before_step_duration=before_step_duration)
             self._dodge_steps_in_stops.append(dodge_step)
             self._build_print_list()
            
