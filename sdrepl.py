@@ -15,7 +15,9 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-# stuff to bootstrap the REPL
+# Stuff to bootstrap the REPL
+# Puts the default enlarger into the user namespace as enlarger.
+# Puts the prints module into the user namespace as p.
 
 import smartdarkroom.main
 import smartdarkroom.prints as p
