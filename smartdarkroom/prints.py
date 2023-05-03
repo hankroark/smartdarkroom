@@ -132,9 +132,6 @@ class MultiStepPrint(BasicPrint):
                                           before_steps_light=before_step_light)
 
 
-    
-    # TODO @classmethod ilford split grade strategy, return tuple
-
         @property
         def base_duration(self):
             return self._base_duration

@@ -16,7 +16,24 @@ import threading
 import time
 
 class RepeatedTimer(object):
+    """
+    Repeated Timer executes a user supplied function on a regular interval.  The timer starts
+    at the construction of the object and stops when told to stop. The first execution
+    of the provided function starts at time zero (0).  The timer runs on a background
+    thread so other things can execute while this is running.  The times takes into account the
+    time to run the given function and as such protects against drift.
+    """
+
     def __init__(self, interval, function, *args, **kwargs):
+        """
+        Constructs a new instance of the Repeated Timer.
+
+        Parameters:
+            interval (float): Required. The number of seconds between execution of the function
+            function (function): Required. The function to execute every interval seconds
+            *args: The arguments to pass to the function
+            **kwargs:  The keywork arguements to pass to the function
+        """
         self._timer = None
         self.interval = interval
         self.function = function
@@ -28,14 +45,23 @@ class RepeatedTimer(object):
         self.start()
 
     def _time_zero(self):
+        """
+        What to do at time zero.  Default is to run the function once.
+        """
         self.function(*self.args, **self.kwargs)
 
     def _run(self):
+        """
+        Restarts the interval and runs the function in parallel.
+        """
         self.is_running = False
         self.start()
         self.function(*self.args, **self.kwargs)
 
     def start(self):
+        """
+        Starts the time running at every interval.
+        """
         if not self.is_running:
             self.next_call += self.interval
             self._timer = threading.Timer(self.next_call - time.time(), self._run)
@@ -43,6 +69,9 @@ class RepeatedTimer(object):
             self.is_running = True
 
     def stop(self):
+        """
+        Stops the timer from running.  Can be restarted with start function.
+        """
         self._timer.cancel()
         self.is_running = False
 
