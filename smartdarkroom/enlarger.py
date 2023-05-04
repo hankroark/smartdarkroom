@@ -11,6 +11,12 @@
 #    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
+"""
+This module encapsulates the notion of what an enlarger should be.  Right now it
+represents a simple enlarger with on/off, a filter, a metronome, and a count-up
+clock for prints.  It can run a single print, or run a whole strategy of print
+steps as defined from the smartdarkroom.prints module.
+"""
 
 import time
 import os
