@@ -39,7 +39,7 @@ class PrintStep():
 
         Keyword Parameters:
             user_prompt (string): The prompt to remind the user what the step is for or what do before the step. Default: empty string.
-            grade (usually string): The grade of the multicontrast print to make. Default: None.  Just needs an object that can be compared with equality.
+            grade (float): The grade of the multicontrast print to make. Default: None.  Just needs an object that can be compared with equality.
             before_step_duration (float): The amount of time to turn on the enlarger light before the actual exposure. Default: 0.
         """
         self._duration = duration
@@ -149,7 +149,8 @@ class BasicPrint(ABC):
         Creates a new Print with the two print lists combined into one new Print.
 
         Returns:
-            A BasicPrint that is the two Prints append in order.  Because it is now a BasicPrint only very limited operations are available.
+            basic_print : `BasicPrint`
+                A BasicPrint that is the two Prints append in order.  Because it is now a BasicPrint only very limited operations are available.
         """
         return BasicPrint(self.get_print_list() + other.get_print_list())
     
@@ -162,9 +163,12 @@ class BasicPrint(ABC):
             key (int): The offset from the beginning of the Print to return.
 
         Returns:
-            A single PrintStep at the offset given.
+            print_step : `PrintStep` 
+                A single PrintStep at the offset given.
         """
         return self.get_print_list()[key]
+    
+    # TODO : Add note field.
     
 
 class OneExposurePrint(BasicPrint):
@@ -181,7 +185,7 @@ class OneExposurePrint(BasicPrint):
             print_duration (float): Required.  The exposure for the print in seconds.
 
         Keyword Parameters:
-            grade (usually string): The grade of the multicontrast print to make. Default: 2.5.  Just needs an object that can be compared with equality.
+            grade (float): The grade of the multicontrast print to make. Default: 2.5.  Just needs an object that can be compared with equality.
             before_step_duration (float): The amount of time to turn on the enlarger light before the actual exposure. Default: 0.
         """
         steps = [ PrintStep(print_duration, grade=grade, user_prompt="Place paper for print.", before_step_duration=before_step_duration) ]
@@ -190,7 +194,8 @@ class OneExposurePrint(BasicPrint):
     @classmethod
     def from_step(cls, source_print, step_number, *, before_step_duration=0):
         """
-        Constructs a new OneExposurePrint from the step in another print.  Used typically to pull a print steps from a test strip into a single print.
+        Constructs a new OneExposurePrint from the step in another print.  Used typically to pull a print steps from a test strip into a single print. 
+        Grade of the new print is the same as the original print step.
 
         Parameters:
             source_print (BasicPrint): the source Print to pull from.
@@ -205,7 +210,27 @@ class OneExposurePrint(BasicPrint):
 
 
 class MultiStepPrint(BasicPrint):
+        """
+        This is a flexible print object.  It supports multiple steps prints, for things like dodging and burning.
+        Everything in this Multistep print is done on a base duration and then stops of dodging and burning.  
+        If the base duration is changed, all of the dodging and burning durations are recalculated automatically.
+        The class supports one contrast grade of printing, but by appending more than one MultiStepPrint together
+        one can get split-grade printing (e.g., fullprint = lowgrade + highgrade).
+        """
+
         def __init__(self, base_duration, *, grade=2.5, user_prompt="Place paper for print.", before_step_duration=0):
+            """
+            Creates a new MultiStepPrint with a base duration and establishes the grade for all the steps.
+
+            Parameters:
+                base_duration (float): The MultiStepPrints base exposure duration in seconds. Required.
+
+            Keyword Parameters:
+                grade (float): The contrast grade of the print. Can be any object with equality. Default is 2.5.
+                user_prompt (string): A prompt to tell the printer what this step is about or what to do ahead of this step.
+                    Default is "Place paper for print."
+                before_step_duration (float): The amount of time to turn on the enlarger light before the actual exposure. Default: 0.
+            """
             self._base_duration = base_duration
             self._base_grade = grade
             self._base_before_step_duration = before_step_duration
@@ -219,12 +244,45 @@ class MultiStepPrint(BasicPrint):
 
         @classmethod
         def from_step(cls, source_print, step_number, *, before_step_duration=0):
+            """
+            Constructs a new MultiStepPrint from the step in another print.  Used typically to pull a print step from a test strip as
+            the base duration and grade for a MultiStepPrint.
+
+            Parameters:
+                source_print (BasicPrint): the source Print to pull from.
+                step_number (int): The number step from the source Print (1 is the first step, 2 is the second step, etc)
+
+            Keyword Parameters:
+                before_step_duration (float): The amount of time to turn on the enlarger light before the actual exposure. Default: 0.
+            """
             original_step = source_print[step_number-1]
             return cls(base_duration=original_step.duration, grade=original_step.grade, \
                       before_step_duration=before_step_duration)
         
         @classmethod
         def ilford_split_grade(cls, total_duration, *, low_grade=0, high_grade=5, before_steps_duration=0):
+            """
+            Creates two MultiPrintStep objects, one at a low contrast grade and one at a hight contrast grade.  
+            Used for quickly making the basis of a split grade print.  Splits the total
+            duration equally between the two objects.  Based on the Ilford Way of creating split grade prints, see
+            https://www.darkroomdave.com/tutorial/split-grade-printing-the-ilford-way-using-ilford-multigrade-under-the-lens-filters/
+            Once these are returned dodge and burn steps can optionally be added to both objects, and the objects concatenated to 
+            make a final print sequence.
+
+            Parameters:
+                total_duration (float): The total duration of both grades of prints.
+
+            Keyword Parameters:
+                low_grade (float): The contrast grade of the lower contrast print sequence.  Default is 0.
+                high_grade (float): The contrast grade of the higher contrast print sequence.  Default is 5.
+                before_step_duration (float): The amount of time to turn on the enlarger light before the actual exposure. Default: 0.
+
+            Returns:
+                low_grade_print : 'MultiStepPrint'
+                    The low grade print
+                high_grade_print : 'MultiStepPrint'
+                    The high grade print
+            """
             low_grade_print = cls(base_duration = total_duration/2,
                                   grade = low_grade,
                                   before_step_duration = before_steps_duration)
@@ -237,6 +295,27 @@ class MultiStepPrint(BasicPrint):
         
         @classmethod
         def ilford_split_grade_from_step(cls, source_print, step_number, *, before_step_duration=0):
+            """
+            Creates two MultiPrintStep objects, one at a low contrast grade and one at a hight contrast grade.  
+            Used for quickly making the basis of a split grade print.  Pulls from an existing print step, like from a test strip.
+            Splits the total duration equally between the two objects.  Based on the Ilford Way of creating split grade prints, see
+            https://www.darkroomdave.com/tutorial/split-grade-printing-the-ilford-way-using-ilford-multigrade-under-the-lens-filters/
+            Once these are returned dodge and burn steps can optionally be added to both objects, and the objects concatenated to 
+            make a final print sequence.
+
+            Parameters:
+                source_print (BasicPrint): the source Print to pull from.
+                step_number (int): The number step from the source Print (1 is the first step, 2 is the second step, etc)
+
+            Keyword Parameters:
+                before_step_duration (float): The amount of time to turn on the enlarger light before the actual exposure. Default: 0.
+
+            Returns:
+                low_grade_print : 'MultiStepPrint'
+                    The low grade print.  Will be at grade 0.
+                high_grade_print : 'MultiStepPrint'
+                    The high grade print.  Will be at grade 5
+            """
             original_step = source_print[step_number-1]
             return cls.ilford_split_grade(total_duration=original_step.duration, \
                                           before_steps_duration=before_step_duration)
@@ -244,6 +323,9 @@ class MultiStepPrint(BasicPrint):
 
         @property
         def base_duration(self):
+            """
+            The length of the exposure duration in seconds (float). Recalculates all other steps based on this new duration when set.
+            """
             return self._base_duration
         
         @base_duration.setter
@@ -253,6 +335,9 @@ class MultiStepPrint(BasicPrint):
 
         @property
         def grade(self):
+            """
+            The grade of all the steps in the print. Float.  Examples are 0, 0.5, 1, 1.5, and so on.  Rebuilds the steps of the print based on the new grade.
+            """
             return self._base_grade
         
         @grade.setter
@@ -262,6 +347,9 @@ class MultiStepPrint(BasicPrint):
 
         @property
         def base_user_prompt(self):
+            """
+            A prompt to tell the printer what the base step is about or what to do ahead of the base step.  String type.
+            """
             return self._base_user_prompt
         
         @base_user_prompt.setter
@@ -272,6 +360,11 @@ class MultiStepPrint(BasicPrint):
         # TODO make base before actions mutable
 
         def _build_print_list(self):
+            """
+            Anytime the MultiStepPrint is created or changed, all of the steps are automatically recalculated.
+            First the removal (dodge) steps and then the base step and then the additive (burn) steps.
+            These are then place back into the print in order of base, then dodges, and then burns.
+            """
             dodge_steps = self._calc_dodge_steps()
             base_step = PrintStep(duration=self._base_duration - self._total_dodge_duration, \
                                   grade=self._base_grade, \
@@ -281,6 +374,13 @@ class MultiStepPrint(BasicPrint):
             self._set_print_list([base_step]+dodge_steps+burn_steps)
 
         def remove_step(self, step_number):
+            """
+            Allow the user to remove a step.  Any step except the base step can be removed.  Triggers a recalculation.
+
+            Parameter:
+                step_number (int): The step to remove from the print. Needs to be 2 or greater (base step cannot be removed) but less than or
+                    equal to the maximum step number.  To get the list of steps just print() this object.
+            """
             if step_number == 1:
                 print("Cannot remove the base step.  No action taken.")
                 return
@@ -298,6 +398,9 @@ class MultiStepPrint(BasicPrint):
             self._build_print_list()
 
         def _calc_burn_steps(self):
+            """
+            Calculates all of the burn steps durations based on the number of stops and base duration.
+            """
             burn_steps = []
             for step in self._burn_steps_in_stops:
                 burn_duration = self._base_duration * 2**step.duration - self._base_duration
@@ -309,6 +412,16 @@ class MultiStepPrint(BasicPrint):
             return burn_steps
 
         def burn(self, stops, *, before_step_duration=0, subject=""):
+            """
+            Allows the user to add a burn step to the print.
+
+            Parameters:
+                stops (float): The number of stops of burn to do.
+
+            Keyword Parameters:
+                before_step_duration (float): The amount of time to turn on the enlarger light before the actual exposure. Default: 0.
+                subject (string): The subject to be burned, added to user prompt to aid the printer. Default to empty string.
+            """
             user_prompt = f"Burn {subject} for {stops} stops."
             burn_step = PrintStep(stops, grade=None,   # Grade of step ignored when building
                                   user_prompt=user_prompt, \
@@ -317,6 +430,9 @@ class MultiStepPrint(BasicPrint):
             self._build_print_list()
 
         def _calc_dodge_steps(self):
+            """
+            Calculates all of the dodge steps durations basedon the number of stops and base duration.
+            """
             dodge_steps = []
             self._total_dodge_stops = 0
             self._total_dodge_duration = 0
@@ -333,6 +449,21 @@ class MultiStepPrint(BasicPrint):
             return dodge_steps
 
         def dodge(self, stops, *, before_step_duration=0, subject=""):
+            """
+            Allows the user to add a dodge step to the print.
+
+            Parameters:
+                stops (float): The number of stops of dodge to do.
+
+            Keyword Parameters:
+                before_step_duration (float): The amount of time to turn on the enlarger light before the actual exposure. Default: 0.
+                subject (string): The subject to be burned, added to user prompt to aid the printer. Default to empty string.
+
+            Raises:
+                Exception
+                    Raised if the proposed dodge step would make the total of all the dodge steps greater than the base duration.
+            """
+
             proposed_dodge_duration = self._base_duration - self._base_duration / (2**stops)
             if (proposed_dodge_duration + self._total_dodge_duration) > self._base_duration:
                 raise Exception("Cannot add dodge step that would make total dodge duration greater than base duration.")
@@ -364,7 +495,7 @@ class FStopTestStrip(BasicPrint):
             stops (float): The number of stops between steps/strips in this test print. Defaults to 1/2.
             middle_out (bool): If true then the base exposure will be the middle of the test strip and offsets will be calculated above and below.
                 Useful when one want to fine tune for the base exposure by exploring around a middle. Defaults to False.
-            grade: The grade used to print the test strip.;
+            grade (float): The grade used to print the test strip.;
         """
         if middle_out:
             base = base / 2**(int(steps/2)*stops)
@@ -408,7 +539,7 @@ class FStopTestStrip(BasicPrint):
             stops (float): The number of stops between steps/strips in this test print. Defaults to 1/2.
             middle_out (bool): If true then the base exposure will be the middle of the test strip and offsets will be calculated above and below.
                 Useful when one want to fine tune for the base exposure by exploring around a middle. Defaults to False.
-            grade: The grade used to print the test strip.  If no grade is given (the default) the grade of the original print step will be used.
+            grade (float): The grade used to print the test strip.  If no grade is given (the default) the grade of the original print step will be used.
         """
         original_step = source_print[step_number-1]
         if grade is None:
@@ -435,7 +566,7 @@ class LocalizedFStopTestStrip(BasicPrint):
             stops (float): The number of stops between steps/strips in this test print. Defaults to 1/2.
             middle_out (bool): If true then the base exposure will be the middle of the test strip and offsets will be calculated above and below.
                 Useful when one want to fine tune for the base exposure by exploring around a middle. Defaults to False.
-            grade: The grade used to print the test strip.;
+            grade (float): The grade used to print the test strip.;
         """
         if middle_out:
             base = base / 2**(int(steps/2)*stops)
@@ -459,7 +590,7 @@ class LocalizedFStopTestStrip(BasicPrint):
             stops (float): The number of stops between steps/strips in this test print. Defaults to 1/2.
             middle_out (bool): If true then the base exposure will be the middle of the test strip and offsets will be calculated above and below.
                 Useful when one want to fine tune for the base exposure by exploring around a middle. Defaults to False.
-            grade: The grade used to print the test strip.  If no grade is given (the default) the grade of the original print step will be used.
+            grade (float): The grade used to print the test strip.  If no grade is given (the default) the grade of the original print step will be used.
         """
         original_step = source_print[step_number-1]
         if grade is None:
