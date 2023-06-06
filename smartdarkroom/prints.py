@@ -94,14 +94,16 @@ class BasicPrint(ABC):
     meaning normally a user will not make one of these direction.  Prints are made up of an ordered list of PrintSteps.
     """
 
-    def __init__(self, steps=[]):
+    def __init__(self, steps=[], notes=""):
         """
         Constructs a print with a set of initial print steps.
 
         Parameters:
             steps (list of PrintSteps): the steps of the prints.  Defaults to an empty list [].
+            notes (String): just some notes to go along with the print.  Put anything useful to you in here.
         """
         self._print_list = steps
+        self._notes = notes
 
     def __str__(self):
         """
@@ -114,6 +116,7 @@ class BasicPrint(ABC):
         representation = f"{self._print_type()}(\n"
         for i, step in enumerate(self.get_print_list()):
             representation += f"    {i+1}: {step},\n"
+        representation += f"Notes: {self._notes}\n"
         representation += ")"
         return representation
     
@@ -168,8 +171,17 @@ class BasicPrint(ABC):
         """
         return self.get_print_list()[key]
     
-    # TODO : Add note field.
+    @property
+    def notes(self):
+        """
+        Some notes to go along with the print, anything needed to remind the printer about the print.
+        """
+        return self._notes    
     
+    @notes.setter
+    def notes(self, new_notes):
+        self._notes = new_notes
+
 
 class OneExposurePrint(BasicPrint):
     """
