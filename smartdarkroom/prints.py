@@ -598,5 +598,63 @@ class LocalizedFStopTestStrip(BasicPrint):
 
         return cls(base=original_step.duration, steps=steps, stops=stops, middle_out=middle_out, grade=grade)
     
-    # TODO create split grade test strip classes
 
+class BarnbaumTestPrint(BasicPrint):
+    """
+    Bruce Barnbaum recommends creating full test prints (if on needs a test print at all).  The test print
+    should be the entire area to be printed, with exposures a n seconds, 2n seconds, and 3n seconds (this
+    corresponds, assuming 2n seconds is the target, to a section 1 stop below target, a section at target,
+    and a section at about 2/3rd stop above target exposure).  Bruce's argument is a test print creates
+    the most information, at the least cost, to start and get to the final print.  The goal is also to decide
+    which parts of the print to expose each duration to maximize the information and not just blindly
+    cover a third of the print each time.
+    
+    We set the target (2n) exposure time to default to 15 seconds, because 15 seconds is a good base for any dodging
+    that might need to happen during main exposure.  Bruce teaches to learn to look at the light from the
+    enlarger reflected on the printing easel and learn to adjust the exposure (f-stops on the enlarger lens plus
+    neutral density filters plus and filters to adjust grade) to hit close to that 15 second mark.
+
+    See _The Art of Photography_ by Bruce Barnbaum, 2nd edition, pp 185-189.
+    """
+
+    def __init__(self, base=7.5, middle_out=False, grade=2):
+        """
+        Constructs a new test print based on a base exposure and offsets from the base in seconds.
+        
+        Parameters:
+            base (float): The base exposure in seconds. Defaults to 7.5.
+            middle_out (bool): If true then the base exposure will be the middle of the test prints and offsets will be calculated above and below.
+                Useful when one want to fine tune for the base exposure by exploring around a middle. Defaults to False.
+            grade (float): The grade used to print the test print.
+        """
+        if middle_out:
+            base = base / 2.
+        
+        if base < 1.:
+                raise Exception(f"Calculated exposure of {base} is below 1 second, too short for printing.")
+
+        steps = [ PrintStep(base * i, 
+                            grade=grade,
+                            user_prompt="Place paper for print." if i==1 else "Move paper to cover portion of print.") 
+                   for i in range(1, 4) ] 
+        super().__init__(steps = steps)
+
+    @classmethod
+    def from_step(cls, source_print, step_number, middle_out=False, grade=None):
+        """
+        Constructs a new BarnbaumTestPrint from the step in another print.  Used typically to pull a print step from a test strip or print
+        into another test strip/print to fine turn the exposure or the grade of the print.
+
+        Parameters:
+            source_print (BasicPrint): the source Print to pull from.
+            step_number (int): The number step from the source Print (1 is the first step, 2 is the second step, etc)
+            middle_out (bool): If true then the base exposure will be the middle of the test strip and offsets will be calculated above and below.
+                Useful when one want to fine tune for the base exposure by exploring around a middle. Defaults to False.
+            grade (float): The grade used to print the test strip.  If no grade is given (the default) the grade of the original print step will be used.
+        """
+        original_step = source_print[step_number-1]
+        if grade is None:
+            grade = original_step.grade
+
+        return cls(base=original_step.duration, middle_out=middle_out, grade=grade)
+    
