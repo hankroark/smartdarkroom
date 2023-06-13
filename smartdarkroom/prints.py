@@ -55,10 +55,18 @@ class PrintStep():
         Returns:
             string of a user friendly view of this print step.
         """
+        before_step_action = None
+        if self.before_step_duration > 0:
+            before_step_action = f"Preview {self.before_step_duration:.1f} sec w/light"
+        elif self.before_step_duration == 0:
+            before_step_action = "No pre-step preview light"
+        else:
+            before_step_action = "No pre-step user prompt (step is continuation of previous step)"
+
         return f"PrintStep(Exposure {self.duration:.1f} sec, " + \
                  f"Grade {self.grade}, " + \
-                 f"Preview {self.before_step_duration:.1f} sec w/light, " + \
-                 f"{self.user_prompt})"
+                 f"{self.user_prompt}, " + \
+                 before_step_action + ")"
     
     @property
     def duration(self):
@@ -435,7 +443,7 @@ class MultiStepPrint(BasicPrint):
                 before_step_duration (float): The amount of time to turn on the enlarger light before the actual exposure. Default: 0.
                 subject (string): The subject to be burned, added to user prompt to aid the printer. Default to empty string.
             """
-            user_prompt = f"Burn {subject} for {stops} stops."
+            user_prompt = f"Burn {subject if subject else 'unspecified subject'} for {stops} stops"
             burn_step = PrintStep(stops, grade=None,   # Grade of step ignored when building
                                   user_prompt=user_prompt, \
                                   before_step_duration=before_step_duration)
@@ -482,7 +490,7 @@ class MultiStepPrint(BasicPrint):
             if (proposed_dodge_duration + self._total_dodge_duration) > self._base_duration:
                 raise Exception("Cannot add dodge step that would make total dodge duration greater than base duration.")
 
-            user_prompt = f"Dodge {subject} for {stops} stops."
+            user_prompt = f"Dodge {subject if subject else 'unspecified subject'} for {stops} stops"
             dodge_step = PrintStep(stops, grade=None, # Grade of step ignored when building
                                    user_prompt=user_prompt, \
                                    before_step_duration=before_step_duration)
