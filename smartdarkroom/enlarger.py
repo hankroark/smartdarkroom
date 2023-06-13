@@ -24,6 +24,7 @@ import smartdarkroom.utils as sdutils
 import smartdarkroom.prints
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
+from itertools import tee
 
 METRONOME_SOUND = os.getenv('METRONOME_SOUND', 'smartdarkroom/resources/metronome_click.wav')
 AFTER_PREVIEW_SOUND = os.getenv("AFTER_PREVIEW_SOUND", 'smartdarkroom/resources/whistle.wav')
@@ -79,7 +80,7 @@ class Enlarger():
             input(f"*** Set filter to {filter}.  Press ENTER when complete. ")
             self._filter = filter 
         
-    def print(self, seconds, *, filter=None, before_print_seconds=0):
+    def print(self, seconds, *, filter=None, before_print_seconds=0, turn_off_enlarger_at_end_of_print=True):
         """
         This is the most basic print command.  It turns on the enlarger for a certain number of seconds.
         There are options to set the filter.  A metronome will sound every second.
@@ -104,13 +105,17 @@ class Enlarger():
                 time.sleep(before_print_seconds)
                 before_metro.stop()
                 _play_after_preview_sound()
+            elif before_print_seconds < 0:   # Give the user a audible warning if there was no pause at all
+                _play_after_preview_sound()
 
             print(f"Printing for {seconds:.1f} seconds")
             metronome = Metronome()
             self._on()
             time.sleep(seconds)
         finally:
-            self._off()
+            # Don't turn the enlarger off if there is no pause for the next step
+            if turn_off_enlarger_at_end_of_print:
+                self._off()
             metronome.stop()
 
     def make(self, the_print):
@@ -126,10 +131,26 @@ class Enlarger():
         self._off()  # turn off the focus if it is on
         self._preview_print(the_print)
         steps = the_print.get_print_list()
-        for i, step in enumerate(steps):
-            print(f"Step {i+1}: {step}")
-            input(f"*** {step.user_prompt}  Press the ENTER when complete. ")
-            self.print(step.duration, filter=step.grade, before_print_seconds=step.before_step_duration)
+
+        # Get me the list of steps twice
+        steps_main, steps_lookahead = tee(steps)
+        # Skip to the next step for the b list
+        next(steps_lookahead, None)
+        # for i, step in enumerate(steps):
+        for step_number, step in enumerate(steps_main):
+            print(f"Step {step_number+1}: {step}")
+
+            # Don't prompt the user unless the step says to pause
+            if step.before_step_duration >= 0:
+                input(f"*** {step.user_prompt}  Press the ENTER when complete. ")
+            
+            # Look ahead at the next step and see if they want the enlarger left on for them
+            next_step = next(steps_lookahead, None)
+            turn_off_enlarger_at_end_of_step = True # default
+            if next_step is not None:
+                turn_off_enlarger_at_end_of_step = next_step.before_step_duration >= 0
+
+            self.print(step.duration, filter=step.grade, before_print_seconds=step.before_step_duration, turn_off_enlarger_at_end_of_print=turn_off_enlarger_at_end_of_step)
 
     def _preview_print(self, the_print):
         """
@@ -182,3 +203,4 @@ def _play_after_preview_sound(sound = AFTER_PREVIEW_SOUND, repeat=2):
     after_preview_sound = pygame.mixer.Sound(sound)
     for _ in range(repeat):
         pygame.mixer.Sound.play(after_preview_sound)
+

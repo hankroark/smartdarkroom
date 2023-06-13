@@ -40,7 +40,8 @@ class PrintStep():
         Keyword Parameters:
             user_prompt (string): The prompt to remind the user what the step is for or what do before the step. Default: empty string.
             grade (float): The grade of the multicontrast print to make. Default: None.  Just needs an object that can be compared with equality.
-            before_step_duration (float): The amount of time to turn on the enlarger light before the actual exposure. Default: 0.
+            before_step_duration (float): The amount of time to turn on the enlarger light before the actual exposure. If set to -1 there is
+                no pause or user prompt before the step begins (useful for dodges). Default: 0.
         """
         self._duration = duration
         self._user_prompt = user_prompt
@@ -460,7 +461,7 @@ class MultiStepPrint(BasicPrint):
                 dodge_steps.append(dodge_step)
             return dodge_steps
 
-        def dodge(self, stops, *, before_step_duration=0, subject=""):
+        def dodge(self, stops, *, before_step_duration=-1, subject=""):
             """
             Allows the user to add a dodge step to the print.
 
@@ -468,7 +469,8 @@ class MultiStepPrint(BasicPrint):
                 stops (float): The number of stops of dodge to do.
 
             Keyword Parameters:
-                before_step_duration (float): The amount of time to turn on the enlarger light before the actual exposure. Default: 0.
+                before_step_duration (float): The amount of time to turn on the enlarger light before the actual exposure. Default: -1 (meaning
+                    that there will not be a pause or user prompt, just an audible signal that the dodge time is beginning.)
                 subject (string): The subject to be burned, added to user prompt to aid the printer. Default to empty string.
 
             Raises:

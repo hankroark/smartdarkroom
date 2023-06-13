@@ -13,4 +13,5 @@ from GPIO Zero, start python with 'GPIOZERO_PIN_FACTORY=mock python3' (or the sa
 ## Control GPIO pin for enlarger
 By default the GPIO pin to control the simple enlarger to be on or off is pin 18.  This can be changed
 at startup by 'POWER_SWITCH_PIN=16 ./smartdarkroom.sh'.  I often do this as I have a simple actual LED
-hooked to that pin and I can test new functionality without flipping on and off the enlarger.
+hooked to that pin (with a resistor to ground) and I can test new functionality without flipping 
+on and off the enlarger.
