@@ -77,12 +77,26 @@ class Enlarger():
         Parameters:
             filter: Required. Anything object that can be compared with == to prior filter to determine state of the enlarger"""
         if filter != self._filter:
-            input(f"*** Set filter to {filter}.  Press ENTER when complete. ")
+            input(f"*** Set filter to {filter}.  Press ENTER when complete.")
             self._filter = filter 
-        
-    def print(self, seconds, *, filter=None, before_print_seconds=0, turn_off_enlarger_at_end_of_print=True):
+    
+    def print(self, seconds, *, filter=None):
         """
         This is the most basic print command.  It turns on the enlarger for a certain number of seconds.
+        There are options to set the filter.  A metronome will sound every second.
+
+
+        Parameters:
+            seconds (float): Required. The number of seconds for the print.
+
+        Keyword Parameters:
+            filter: The filter to be set on the enlarger for the print.
+        """
+        self._print(seconds, filter=filter)
+
+    def _print(self, seconds, *, filter=None, before_print_seconds=0, turn_off_enlarger_at_end_of_print=True):
+        """
+        This is the core implementation of a print step command.  It turns on the enlarger for a certain number of seconds.
         There are options to set the filter.  A metronome will sound every second.
         As well there is a preview light that can be turned on to help the user setup for dodge or 
         burn operations; a metronome will also sound during this time and will sound a bell at the end
@@ -93,7 +107,9 @@ class Enlarger():
 
         Keyword Parameters:
             filter: The filter to be set on the enlarger for the print.
-            before_print_seconds (float): If using the preview light the number of seconds for it to be on.
+            before_print_seconds (float): If using the preview light the number of seconds for it to be on. Default to 0.
+            turn_off_enlarger_at_the_end_of_print (boolean): Says if the enlarger should stay on after the print time.  
+                Usually only set to False for dodge steps following the main print.  Default True.
         """
         self._set_filter(filter)
 
@@ -142,7 +158,7 @@ class Enlarger():
 
             # Don't prompt the user unless the step says to pause
             if step.before_step_duration >= 0:
-                input(f"*** {step.user_prompt}  Press the ENTER when complete. ")
+                input(f"*** {step.user_prompt}  Press the ENTER when ready to continue.")
             
             # Look ahead at the next step and see if they want the enlarger left on for them
             next_step = next(steps_lookahead, None)
@@ -150,7 +166,7 @@ class Enlarger():
             if next_step is not None:
                 turn_off_enlarger_at_end_of_step = next_step.before_step_duration >= 0
 
-            self.print(step.duration, filter=step.grade, before_print_seconds=step.before_step_duration, turn_off_enlarger_at_end_of_print=turn_off_enlarger_at_end_of_step)
+            self._print(step.duration, filter=step.grade, before_print_seconds=step.before_step_duration, turn_off_enlarger_at_end_of_print=turn_off_enlarger_at_end_of_step)
 
     def _preview_print(self, the_print):
         """
