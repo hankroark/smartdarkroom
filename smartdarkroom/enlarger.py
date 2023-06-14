@@ -58,14 +58,20 @@ class Enlarger():
         """
         self._light.off()
 
-    def focus(self):
+    def focus(self, timeout=300):
         """
         Turns on the light of the enlarger so user can focus or do other operations.
         Waits for the user to press the Enter key to turn off the light.
+
+        Parameters:
+            timeout: Auto turn off the enlarger after timeout seconds. Default 300 (5 minutes)
         """
         try:
-            self._on()
-            input("*** Press the ENTER key to turn off focus. ")
+            with sdutils.Timeout(seconds=timeout):
+                self._on()
+                input("*** Press the ENTER key to turn off focus. ")
+        except TimeoutError:
+            print("\nReached focus timeout, turning off enlarger to protect bulb")
         finally:
             self._off()
 
