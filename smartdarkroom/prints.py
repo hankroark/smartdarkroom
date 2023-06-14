@@ -258,7 +258,7 @@ class MultiStepPrint(BasicPrint):
             self._base_user_prompt = user_prompt
             self._burn_steps_in_stops = []
             self._dodge_steps_in_stops = []
-            self._total_dodge_steps = 0
+            self._total_dodge_stops = 0
             self._total_dodge_duration = 0
             super().__init__()
             self._build_print_list()
@@ -461,7 +461,7 @@ class MultiStepPrint(BasicPrint):
             for step in self._dodge_steps_in_stops:
                 step_stops = step.duration
                 dodge_duration = self._base_duration - self._base_duration / (2**step_stops) # duration is stops here
-                self._total_dodge_steps += step_stops
+                self._total_dodge_stops += step_stops
                 self._total_dodge_duration += dodge_duration
                 dodge_step = PrintStep(duration=dodge_duration,  
                                        grade = self._base_grade, 
