@@ -4,7 +4,7 @@
 Needs python 3.7 or greater
 
 If developing on Mac or Windows: run pip install -r requirements-dev.txt.  
-This will skill installing the RaspberryPi GPIO native libaries and allow development.
+This will skip installing the RaspberryPi GPIO native libaries and allow development.
 
 ## Mocking the pins
 SmartDarkroom uses the GPIO Zero library for implementation.  To use the mock GPIO pin implementation
