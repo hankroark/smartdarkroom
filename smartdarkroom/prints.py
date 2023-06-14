@@ -426,25 +426,26 @@ class MultiStepPrint(BasicPrint):
             for step in self._burn_steps_in_stops:
                 burn_duration = self._base_duration * 2**step.duration - self._base_duration
                 burn_step = PrintStep(duration=burn_duration,  
-                                      grade = self._base_grade, 
+                                      grade = self._base_grade if step.grade is None else step.grade, 
                                       user_prompt = step.user_prompt, 
                                       before_step_duration = step.before_step_duration)
                 burn_steps.append(burn_step)
             return burn_steps
 
-        def burn(self, stops, *, before_step_duration=0, subject=""):
+        def burn(self, stops, *, grade=None, before_step_duration=0, subject=""):
             """
-            Allows the user to add a burn step to the print.
+            Allows the user to add a burn step to the print.  Burn steps can be done at a grade different than the base print.
 
             Parameters:
                 stops (float): The number of stops of burn to do.
 
             Keyword Parameters:
+                grade (float): The grade of the burn step.  If none specified will default to the grade of the base print.
                 before_step_duration (float): The amount of time to turn on the enlarger light before the actual exposure. Default: 0.
                 subject (string): The subject to be burned, added to user prompt to aid the printer. Default to empty string.
             """
             user_prompt = f"Burn {subject if subject else 'unspecified subject'} for {stops} stops"
-            burn_step = PrintStep(stops, grade=None,   # Grade of step ignored when building
+            burn_step = PrintStep(stops, grade=grade,   # Grade of step ignored when building
                                   user_prompt=user_prompt, \
                                   before_step_duration=before_step_duration)
             self._burn_steps_in_stops.append(burn_step)
@@ -471,7 +472,7 @@ class MultiStepPrint(BasicPrint):
 
         def dodge(self, stops, *, before_step_duration=-1, subject=""):
             """
-            Allows the user to add a dodge step to the print.
+            Allows the user to add a dodge step to the print.  Dodge steps are always done at the grade of the base print.
 
             Parameters:
                 stops (float): The number of stops of dodge to do.
