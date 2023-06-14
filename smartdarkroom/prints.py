@@ -18,6 +18,7 @@ complex multi-step prints.  Mostly supports f-stop style operations.
 """
 
 from abc import ABC
+import pickle
 
 class PrintStep():
     """"
@@ -190,6 +191,16 @@ class BasicPrint(ABC):
     @notes.setter
     def notes(self, new_notes):
         self._notes = new_notes
+
+    def save(self, filename):
+        pickle.dump(self, open(filename+".sdp", "wb"))   # sdp for SmartDarkroom Print
+        text_file = open(filename+".txt", "wt")          # and save a text file side car
+        text_file.write(self.__str__())
+        text_file.close()
+
+    @classmethod
+    def open(cls, filename):
+        return pickle.load(open(filename+".sdp", "rb"))
 
 
 class OneExposurePrint(BasicPrint):
