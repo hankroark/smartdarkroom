@@ -98,7 +98,7 @@ class PrintStep():
         return self._grade
         
 
-class BasicPrint(ABC):
+class PrintBase(ABC):
     """
     This is the base class of all prints, represents what is common for all types of prints.  It is an abstract base class,
     meaning normally a user will not make one of these direction.  Prints are made up of an ordered list of PrintSteps.
@@ -165,7 +165,7 @@ class BasicPrint(ABC):
             basic_print : `BasicPrint`
                 A BasicPrint that is the two Prints append in order.  Because it is now a BasicPrint only very limited operations are available.
         """
-        return BasicPrint(self.get_print_list() + other.get_print_list())
+        return PrintBase(self.get_print_list() + other.get_print_list())
     
     def __getitem__(self, key):
         """
@@ -193,6 +193,13 @@ class BasicPrint(ABC):
         self._notes = new_notes
 
     def save(self, filename):
+        """
+        Saves this PrintBase or any of its subclasses to a file.  Appends .sdp filename provided.  Also saves a text representation 
+        of the print (the same thing one would get by issuing 'print(aPrintObject)').
+
+        Parameters:
+            filename (string): name of the file not including the sdp suffix, including the fully qualified directory.
+        """
         pickle.dump(self, open(filename+".sdp", "wb"))   # sdp for SmartDarkroom Print
         text_file = open(filename+".txt", "wt")          # and save a text file side car
         text_file.write(self.__str__())
@@ -200,10 +207,19 @@ class BasicPrint(ABC):
 
     @classmethod
     def open(cls, filename):
+        """
+        Opens a previously saved PrintBase or any of its subclasses from a file.  
+
+        Parameters:
+            filename (string): name of the file to open, not including the sdp suffix, but including the fully quality directory.
+
+        Returns:
+            A subclass of the PrintBase of the same type as what was saved to the file.
+        """
         return pickle.load(open(filename+".sdp", "rb"))
 
 
-class OneExposurePrint(BasicPrint):
+class OneExposurePrint(PrintBase):
     """
     This is the most basic print that a user would create.  It assume one and only one step in the print sequence.  Once created it is
     immutable (unchangeable).  The user prompt is pre-defined.
@@ -241,7 +257,7 @@ class OneExposurePrint(BasicPrint):
                    before_step_duration=before_step_duration)
 
 
-class MultiStepPrint(BasicPrint):
+class MultiStepPrint(PrintBase):
         """
         This is a flexible print object.  It supports multiple steps prints, for things like dodging and burning.
         Everything in this Multistep print is done on a base duration and then stops of dodging and burning.  
@@ -510,7 +526,7 @@ class MultiStepPrint(BasicPrint):
             self._build_print_list()
            
 
-class FStopTestStrip(BasicPrint):
+class FStopTestStrip(PrintBase):
     """
     This allows the user to create a test strip.  It assumes a standard non localized test strip is being made.
     Further the first exposure is the entire test strip with successive covering of portions of the test strip
@@ -582,7 +598,7 @@ class FStopTestStrip(BasicPrint):
         return cls(base=original_step.duration, steps=steps, stops=stops, middle_out=middle_out, grade=grade)
 
 
-class LocalizedFStopTestStrip(BasicPrint):
+class LocalizedFStopTestStrip(PrintBase):
     """
     This allows the user to create a test strip.  It assumes a standard localized test strip is being made.
     The test strip is based on a base duration and then incremental stops from that duration.
@@ -633,7 +649,7 @@ class LocalizedFStopTestStrip(BasicPrint):
         return cls(base=original_step.duration, steps=steps, stops=stops, middle_out=middle_out, grade=grade)
     
 
-class BarnbaumTestPrint(BasicPrint):
+class BarnbaumTestPrint(PrintBase):
     """
     Bruce Barnbaum recommends creating full test prints (if on needs a test print at all).  The test print
     should be the entire area to be printed, with exposures a n seconds, 2n seconds, and 3n seconds (this
