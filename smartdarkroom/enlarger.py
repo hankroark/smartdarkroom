@@ -25,9 +25,17 @@ import smartdarkroom.prints
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
 import pygame
 from itertools import tee
+import logging
+import logging.config
+
 
 METRONOME_SOUND = os.getenv('METRONOME_SOUND', 'smartdarkroom/resources/metronome_click.wav')
 AFTER_PREVIEW_SOUND = os.getenv("AFTER_PREVIEW_SOUND", 'smartdarkroom/resources/whistle.wav')
+
+# load the logging config file
+logging.config.fileConfig('smartdarkroom/logging.conf')
+# create logger
+enlargerLogger = logging.getLogger('enlargerLogger')
 
 class Enlarger():
     """
@@ -142,13 +150,13 @@ class Enlarger():
 
     def make(self, the_print):
         """
-        This runs a series of print steps as represented in a smartdarkroom.prints.BasicPrint object.
+        This runs a series of print steps as represented in a smartdarkroom.prints.PrintBase object.
         The user will get a preview of all the steps getting ready to execute, and asked to hit 
         Enter before each step starts.  If the focus light is on, it will auto be turned off at the
         beginning of the sequence.
 
         Parameters:
-            the_print (smartdarkroom.prints.BasicPrint):  The print to execute
+            the_print (smartdarkroom.prints.PrintBase):  The print to execute
         """
         self._off()  # turn off the focus if it is on
         self._preview_print(the_print)
@@ -173,6 +181,10 @@ class Enlarger():
                 turn_off_enlarger_at_end_of_step = next_step.before_step_duration >= 0
 
             self._print(step.duration, filter=step.grade, before_print_seconds=step.before_step_duration, turn_off_enlarger_at_end_of_print=turn_off_enlarger_at_end_of_step)
+
+        enlargerLogger.info("Completed print")
+        enlargerLogger.info(the_print)
+        enlargerLogger.info("End of print details")
 
     def _preview_print(self, the_print):
         """
