@@ -28,7 +28,6 @@ baseExposure = p.OneExposurePrint(4, grade=0)
 fstopStrip = p.FStopTestStrip(4, grade=5)
 splitGradeTestStrip = p.PrintBase(list(chain.from_iterable(zip(cycle(baseExposure), fstopStrip))))
 print(splitGradeTestStrip)
-```
 
 > PrintBase(
 >    1: PrintStep(Exposure 4.0 sec, Grade 0, Place paper for print., No pre-step preview light),
@@ -42,4 +41,5 @@ print(splitGradeTestStrip)
 >    9: PrintStep(Exposure 4.0 sec, Grade 0, Place paper for print., No pre-step preview light),
 >    10: PrintStep(Exposure 16.0 sec, Grade 5, , No pre-step preview light),
 > Notes:
->)
+> )
+```
