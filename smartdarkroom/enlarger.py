@@ -139,13 +139,15 @@ class Enlarger():
                 _play_after_preview_sound()
 
             print(f"Printing for {seconds:.1f} seconds")
+            actual_seconds = float(f"{seconds:.1f}")  # print what you tell the user
             metronome = Metronome()
             self._on()
-            time.sleep(seconds)
+            time.sleep(actual_seconds)
         finally:
             # Don't turn the enlarger off if there is no pause for the next step
             if turn_off_enlarger_at_end_of_print:
                 self._off()
+            time.sleep(0.01) # 1/100th second delay so metronome is dispaly correctly
             metronome.stop()
 
     def make(self, the_print):
@@ -208,18 +210,21 @@ class Metronome():
     def __init__(self, sound = METRONOME_SOUND, interval = 1):
         pygame.mixer.init()
         self._count = 0
+        self._sound_interval = interval
+        self._display_interval = interval / 10
         self._metronome_sound=pygame.mixer.Sound(sound)
-        self._metronome = sdutils.RepeatedTimer(interval, self._play)
+        self._metronome = sdutils.RepeatedTimer(self._display_interval, self._play)
 
     def _play(self):
-        pygame.mixer.Sound.play(self._metronome_sound)
+        if self._count % 10 == 0:
+            pygame.mixer.Sound.play(self._metronome_sound)
 
         if self._count == 0:
             print("TIMER: ", end="", flush=True)
         else:
-            print("\b\b\b", end="", flush=True)
+            print("\b\b\b\b", end="", flush=True)
 
-        print(f"{self._count:02} ", end="", flush=True)
+        print(f"{self._count / 10:4.1f}", end="", flush=True)
         self._count += 1
 
     def start(self):
