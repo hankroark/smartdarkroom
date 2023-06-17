@@ -18,7 +18,7 @@ I started thinking about the user experience I wanted.  After considering being 
 
 This is when I said 'Why not put a computer into the darkroom?'  I would get a standard user interface: monitor, keyboard, and mouse.  Having been a software developer at some point in my long past, I also knew that access to a command line and full programming environment provided the ultimate in extensibility.  There were still a few unknowns (e.g., could I make a monitor paper safe, was there a keyboard with red LEDs that was paper safe, etc.) but I felt more confident I could overcome those than with the mobile solution.
 
-As for the user interface, I settled on the simplest thing I thought could work:  a text-based command line and Python-based commands.  Python is a simple programming language to start on and provides lots of opportunities for a user to extend through additional programming.  Plus Python offered a built-in  [REPL](https://en.wikipedia.org/wiki/Read–eval–print_loop) that would allow unlimited interactivity, not just a fixed user interface.  Python gives you superpowers. So that was it, I would build a way to interact with the enlarger through a Python module.
+As for the user interface, I settled on the simplest thing I thought could work: a text-based command line and Python-based commands.  Python is a simple programming language to start on and provides lots of opportunities for a user to extend through additional programming.  Plus Python offered a built-in  [REPL](https://en.wikipedia.org/wiki/Read–eval–print_loop) that would allow unlimited interactivity, not just a fixed user interface.  Python gives you superpowers. So that was it, I would build a way to interact with the enlarger through a Python module.
 
 
 ## Hardware Base
